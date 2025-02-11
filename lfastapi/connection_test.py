@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import httpx
-from fastapi import FastAPI, Body, Header, Response
+from fastapi import FastAPI, Body, Header, Response, HTTPException
 from httpx import ConnectError
 from pydantic import BaseModel
 
@@ -23,6 +23,11 @@ class TagOut(BaseModel):
     created: datetime
 
 
+class ErrorResponse(BaseModel):
+    detail: str
+    status_code: int
+
+
 tags = []
 
 
@@ -42,16 +47,24 @@ def create_tag(tag_in: TagIn) -> TagOut:
     )
 
 
-@app.get('/{number}', response_model=TagOut, status_code=200)
-def get_tag_by_id(number: int) -> TagOut | Response:
+@app.get('/{number}', response_model=TagOut, responses={404: {"model": ErrorResponse}}, status_code=200)
+def get_tag_by_id(number: int) -> TagOut | ErrorResponse:
+    # try:
+    #     tag = tags[number]
+    # except IndexError as error:
+    #     return Response(status_code=404, content=str(error).encode())
+    # return TagOut(
+    #     tag=tag.tag,
+    #     created=tag.created
+    # )
     try:
-        tag = tags[number]
+        tag: Tag = tags[number]
     except IndexError as error:
-        return Response(status_code=404, content=str(error).encode())
-    return TagOut(
-        tag=tag.tag,
-        created=tag.created
-    )
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        )
+    return tag
 
 
 
