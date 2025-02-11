@@ -14,7 +14,7 @@ def show_test_description(person: str = Body(embed=True)):
     return f"Test string, {person}"
 
 
-@app.get("/agent")
+@app.post("/agent")
 def get_agent(user_agent: str = Header()):
     return user_agent
 
