@@ -1,10 +1,6 @@
-import asyncio
-from multiprocessing import Process
-from threading import Thread
-
 import httpx
-from fastapi import FastAPI, Body, Header
-from httpx import Response, ConnectError
+from fastapi import FastAPI, Body, Header, Response
+from httpx import ConnectError
 
 app = FastAPI()
 
@@ -14,9 +10,17 @@ def show_test_description(person: str = Body(embed=True)):
     return f"Test string, {person}"
 
 
-@app.post("/agent")
+@app.get("/agent")
 def get_agent(user_agent: str = Header()):
     return user_agent
+
+
+@app.get("/happy/{code}")
+def happy(response: Response, code: str = 'status', status_code: int = 269):
+    response.status_code = status_code
+    response.headers[code] = str(status_code)
+    print(response.headers)
+    return ':)'
 
 
 def start_server():
