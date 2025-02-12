@@ -1,27 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Creature(BaseModel):
-    name: str
+    name: str = Field(..., min_length=2, max_length=75)
     country: str
     area: str
     description: str
     aka: str
-
-
-default_things=[
-    Creature(
-        name='Yeti',
-        country='CN',
-        area='Himalayas',
-        description='Big white smelly humanoid',
-        aka="Snow man"
-    ),
-    Creature(
-        name='Grandma Yaga',
-        country="RU",
-        area="Slavic woods",
-        description='Old one-legged witch from wood, eats children',
-        aka="Bon Leg"
-    )
-]
