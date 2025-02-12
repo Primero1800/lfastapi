@@ -3,3 +3,5 @@ uvicorn
 httpie
 requests
 httpx
+pydantic 
+mypy

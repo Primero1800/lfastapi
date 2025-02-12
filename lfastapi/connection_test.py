@@ -3,7 +3,7 @@ from datetime import datetime
 import httpx
 from fastapi import FastAPI, Body, Header, Response, HTTPException
 from httpx import ConnectError
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 app = FastAPI()
 
@@ -31,13 +31,22 @@ class ErrorResponse(BaseModel):
 tags = []
 
 
-@app.post('/', response_model=TagOut, status_code=201)
-def create_tag(tag_in: TagIn) -> TagOut:
-    tag: Tag = Tag(
-        tag=tag_in.tag,
-        created=datetime.now(),
-        secret="shhhh",
+@app.post('/', responses={
+    403: {"model": ErrorResponse},
+    201: {"model": TagOut}},
     )
+def create_tag(tag_in: TagIn) -> TagOut:
+    try:
+        tag: Tag = Tag(
+            tag=tag_in.tag,
+            created=datetime.now(),
+            secret="shhhh",
+        )
+    except ValidationError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        )
 
     tags.append(tag)
 
@@ -47,16 +56,11 @@ def create_tag(tag_in: TagIn) -> TagOut:
     )
 
 
-@app.get('/{number}', response_model=TagOut, responses={404: {"model": ErrorResponse}}, status_code=200)
+@app.get('/{number}', responses={
+    404: {"model": ErrorResponse},
+    200: {"model": TagOut}},
+    )
 def get_tag_by_id(number: int) -> TagOut | ErrorResponse:
-    # try:
-    #     tag = tags[number]
-    # except IndexError as error:
-    #     return Response(status_code=404, content=str(error).encode())
-    # return TagOut(
-    #     tag=tag.tag,
-    #     created=tag.created
-    # )
     try:
         tag: Tag = tags[number]
     except IndexError as error:
@@ -65,7 +69,6 @@ def get_tag_by_id(number: int) -> TagOut | ErrorResponse:
             detail=str(error),
         )
     return tag
-
 
 
 
@@ -84,7 +87,7 @@ def happy(response: Response, code: str = 'status', status_code: int = 269):
     response.status_code = status_code
     response.headers[code] = str(status_code)
     print(response.headers)
-    return datetime.datetime.now().strftime('%Y_%m_%d %H:%m:%s')[:19]
+    return datetime.now().strftime('%Y_%m_%d %H:%m:%s')[:19]
 
 
 def start_server():
